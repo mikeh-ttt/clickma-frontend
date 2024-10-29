@@ -1,26 +1,30 @@
-import { GetTaskByIDType, GetTeamsType } from './types/responses';
+import Button from './components/Button';
+import { TaskCard } from './components/TaskCard/index';
+import { GetTaskByIDType } from './types/responses';
 import { api } from './utils/api';
 import { KEY } from './utils/key';
 const { widget } = figma;
 const { useEffect, useSyncedState, AutoLayout, Input, Text } = widget;
 
-function Widget() {
-  const [inputValue, setInputValue] = useSyncedState<string>('inputValue', '');
+type FetchingState<T> = {
+  isLoading: boolean;
+  data: T | undefined;
+  isError: boolean;
+};
 
-  const [storedValue, setStoredValue] = useSyncedState<string | undefined>(
-    'storedValue',
+type WorkspaceState = FetchingState<string>;
+
+function Widget() {
+  const [storedToken, setStoredToken] = useSyncedState<string | undefined>(
+    'storedTokenState',
     undefined
   );
+
   const [isLoading, setIsLoading] = useSyncedState<boolean>('isLoading', false);
 
-  const [workspaceList, setWorkpaceList] = useSyncedState<
-    GetTeamsType | undefined
-  >('workspaceList', undefined);
-
-  const [workspaceId, setWorkspaceId] = useSyncedState<string | undefined>(
-    'workspaceId',
-    undefined
-  );
+  const [storedWorkspace, setStoredWorkspace] = useSyncedState<
+    string | undefined
+  >('storedWorkspaceState', undefined);
 
   const [taskInputValue, setTaskInputValue] = useSyncedState<string>(
     'taskInputValue',
@@ -32,46 +36,55 @@ function Widget() {
     []
   );
 
-  const fetchWorkspaceList = async (token: string) => {
-    setIsLoading(true);
-    try {
-      const response = await api<GetTeamsType>('/team', token);
-
-      if (!response) {
-        throw new Error('Error occurred during data fetching');
-      }
-
-      setWorkpaceList(response);
-      figma.notify('API call successful!');
-    } catch (error) {
-      console.error('Error:', error);
-      figma.notify('Error occurred during data fetching');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!storedValue) {
+    if (!storedToken) {
       figma.clientStorage.getAsync(KEY.AUTH_TOKEN).then((token) => {
         if (!token) return;
-        setStoredValue(token);
+
+        setStoredToken(token);
       });
     }
 
-    if (storedValue && !workspaceList) {
-      // fetchWorkspaceList(storedValue);
+    if (storedToken && !storedWorkspace) {
+      figma.clientStorage.getAsync(KEY.WORKSPACE_ID).then((ws) => {
+        if (!ws) return;
+        setStoredWorkspace(ws);
+      });
     }
   });
 
-  const saveAuthToken = async (token: string) => {
+  // const render = (components: ParsedComponent[]) => {
+  //   return components.map((component) => {
+  //     switch (component.type) {
+  //       case 'h1':
+  //         return <Typography variant='h1'>{component.content}</Typography>;
+  //       case 'h2':
+  //         return <Typography variant='h2'>{component.content}</Typography>;
+  //       case 'h3':
+  //         return <Typography variant='h3'>{component.content}</Typography>;
+  //       case 'h4':
+  //         return <Typography variant='h4'>{component.content}</Typography>;
+  //       case 'h5':
+  //         return <Typography variant='h5'>{component.content}</Typography>;
+  //       case 'h6':
+  //         return <Typography variant='h6'>{component.content}</Typography>;
+  //       case 'p':
+  //         return <Typography variant='body1'>{component.content}</Typography>;
+  //       default:
+  //         return null;
+  //     }
+  //   });
+  // };
+
+  const saveAuthTokenAndWorkspace = async (
+    token: string,
+    workspace: string
+  ) => {
     setIsLoading(true);
     try {
       await figma.clientStorage.setAsync(KEY.AUTH_TOKEN, token);
-      if (inputValue) {
-        setStoredValue(token);
-        figma.notify('Token saved successfully!');
-      }
+      await figma.clientStorage.setAsync(KEY.WORKSPACE_ID, workspace);
+      figma.notify('Token saved successfully!');
     } catch (error) {
       console.error('Error:', error);
       figma.notify('Error occurred during save');
@@ -80,21 +93,18 @@ function Widget() {
     }
   };
 
-  const saveWorkspaceId = async (id: string) => {
-    setWorkspaceId(id);
-  };
-
   const searchTask = async () => {
-    if (!storedValue || !workspaceId) return;
+    if (!storedToken || !storedWorkspace) return;
 
     setIsLoading(true);
-
+    console.log(`/task/${storedWorkspace}/${taskInputValue}`);
     try {
       const response = await api<GetTaskByIDType>(
-        `/task/${taskInputValue}?team_id=${workspaceId}&custom_task_ids=true`,
-        storedValue
+        `/task/${storedWorkspace}/${taskInputValue}`,
+        storedToken
       );
 
+      console.log({ response });
       if (!response) {
         throw new Error('Error occurred during data fetching');
       }
@@ -117,15 +127,16 @@ function Widget() {
       figma.ui.on('message', async (data, props) => {
         const { type } = data;
 
-        if (type === 'saveAccessToken') {
-          const { accessToken } = data;
-          await saveAuthToken(accessToken);
+        if (type === 'saveTokenAndWorkspace') {
+          const { accessToken, workspaceId } = data;
+          await saveAuthTokenAndWorkspace(accessToken, String(workspaceId));
           figma.notify('Successfully authorized');
           figma.closePlugin();
         }
       });
     });
   };
+
   return (
     <AutoLayout
       direction='vertical'
@@ -137,79 +148,27 @@ function Widget() {
       cornerRadius={8}
       spacing={12}
     >
-      {!storedValue && (
-        <AutoLayout
-          onClick={openAuthWidget}
-          fill={isLoading ? '#CCCCCC' : '#4CAF50'}
-          cornerRadius={4}
-          padding={{ vertical: 8, horizontal: 16 }}
-        >
-          <Text fill='#FFFFFF'>Login</Text>
-        </AutoLayout>
+      {!storedToken && (
+        <Button label='Login' variant='primary' onClick={openAuthWidget} />
       )}
 
-      {storedValue && (
-        <Text fontSize={12} fill='#666666'>
-          Stored value: {storedValue}
-        </Text>
-      )}
-
-      {!workspaceId && workspaceList !== undefined && workspaceList.teams ? (
-        <AutoLayout
-          direction='vertical'
-          verticalAlignItems='start'
-          horizontalAlignItems='start'
-        >
-          <Text fontSize={12}>Workspace</Text>
-          {workspaceList.teams.map((team) => (
-            <AutoLayout
-              key={team.id}
-              direction='vertical'
-              fill={'#4CAF50'}
-              cornerRadius={4}
-              padding={{ vertical: 8, horizontal: 16 }}
-              onClick={() => saveWorkspaceId(team.id)}
-            >
-              <Text>{team.name}</Text>
-              <Text>ID: {team.id}</Text>
-            </AutoLayout>
-          ))}
-        </AutoLayout>
-      ) : null}
-
-      {workspaceId ? (
+      {storedWorkspace ? (
         <>
           <Input
             value={taskInputValue}
             placeholder='Enter task ID'
             onTextEditEnd={(e) => setTaskInputValue(e.characters)}
           />
-          <AutoLayout
-            onClick={searchTask}
-            fill={isLoading ? '#CCCCCC' : '#4CAF50'}
-            cornerRadius={4}
-            padding={{ vertical: 8, horizontal: 16 }}
-          >
-            <Text fill='#FFFFFF'>{isLoading ? 'Loading...' : 'Search'}</Text>
-          </AutoLayout>
+          <Button label='Search' loading={isLoading} onClick={searchTask} />
         </>
       ) : null}
 
-      {taskList && Array.isArray(taskList)
-        ? taskList.map((task) => (
-            <AutoLayout
-              key={task.id}
-              direction='vertical'
-              fill={'#4CAF50'}
-              cornerRadius={4}
-              padding={{ vertical: 8, horizontal: 16 }}
-            >
-              <Text>
-                {task.custom_id} - {task.name}
-              </Text>
-              <Text>{task.description}</Text>
-            </AutoLayout>
-          ))
+      {storedWorkspace && taskList && Array.isArray(taskList)
+        ? taskList.map((task, index) => {
+            return (
+              <TaskCard workspace={storedWorkspace} task={task} index={index} />
+            );
+          })
         : null}
     </AutoLayout>
   );

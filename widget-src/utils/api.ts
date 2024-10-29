@@ -1,4 +1,4 @@
-const BASE_URL = 'https://api.clickup.com/api/v2';
+const BASE_URL = 'https://clickma-backend.vercel.app/api/clickup';
 
 export async function api<T>(
   endpoint: string,

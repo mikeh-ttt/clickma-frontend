@@ -3,6 +3,8 @@ export type GetTeamsType = {
 };
 
 export type GetTaskByIDType = {
+  html_description?: string;
+  markdown_description?: string;
   id: ID;
   custom_id: string;
   custom_item_id: number;
@@ -16,9 +18,9 @@ export type GetTaskByIDType = {
   date_closed: UnixTimestamp | null;
   date_done: UnixTimestamp | null;
   archived: boolean;
-  creator: User;
-  assignees: User[];
-  watchers: User[];
+  creator: ClickUpUser;
+  assignees: ClickUpUser[];
+  watchers: ClickUpUser[];
   checklists: any[]; // You might want to create a more specific type for checklists
   tags: Tag[];
   parent: any | null; // You might want to create a more specific type for parent tasks
