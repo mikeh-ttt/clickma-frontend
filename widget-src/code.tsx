@@ -1,18 +1,11 @@
 import Button from './components/Button';
+import Checkbox from './components/Checkbox';
 import { TaskCard } from './components/TaskCard/index';
 import { GetTaskByIDType } from './types/responses';
 import { api } from './utils/api';
 import { KEY } from './utils/key';
 const { widget } = figma;
 const { useEffect, useSyncedState, AutoLayout, Input, Text } = widget;
-
-type FetchingState<T> = {
-  isLoading: boolean;
-  data: T | undefined;
-  isError: boolean;
-};
-
-type WorkspaceState = FetchingState<string>;
 
 function Widget() {
   const [storedToken, setStoredToken] = useSyncedState<string | undefined>(
@@ -31,26 +24,38 @@ function Widget() {
     ''
   );
 
+  const [isCustomId, setIsCustomId] = useSyncedState<boolean>(
+    'isCustomId',
+    false
+  );
+
   const [taskList, setTaskList] = useSyncedState<GetTaskByIDType[]>(
     'taskList',
     []
   );
 
   useEffect(() => {
-    if (!storedToken) {
-      figma.clientStorage.getAsync(KEY.AUTH_TOKEN).then((token) => {
-        if (!token) return;
+    // console.clear();
 
-        setStoredToken(token);
+    if (!storedToken || !storedWorkspace) {
+      figma.clientStorage.getAsync(KEY.CREDENTIALS).then((value) => {
+        if (!value) return;
+
+        setStoredToken(value.token);
+        setStoredWorkspace(value.workspace);
       });
     }
 
-    if (storedToken && !storedWorkspace) {
-      figma.clientStorage.getAsync(KEY.WORKSPACE_ID).then((ws) => {
-        if (!ws) return;
-        setStoredWorkspace(ws);
-      });
-    }
+    // if (storedToken && !storedWorkspace) {
+    //   console.log('inside 2nd hook', { storedToken, storedWorkspace });
+
+    //   figma.clientStorage.getAsync(KEY.WORKSPACE_ID).then((ws) => {
+    //     if (!ws) return;
+
+    //     console.log({ ws });
+    //     setStoredWorkspace(ws);
+    //   });
+    // }
   });
 
   // const render = (components: ParsedComponent[]) => {
@@ -82,8 +87,9 @@ function Widget() {
   ) => {
     setIsLoading(true);
     try {
-      await figma.clientStorage.setAsync(KEY.AUTH_TOKEN, token);
-      await figma.clientStorage.setAsync(KEY.WORKSPACE_ID, workspace);
+      await figma.clientStorage.setAsync(KEY.CREDENTIALS, { token, workspace });
+      setStoredToken(token);
+      setStoredWorkspace(workspace);
       figma.notify('Token saved successfully!');
     } catch (error) {
       console.error('Error:', error);
@@ -99,7 +105,7 @@ function Widget() {
     setIsLoading(true);
     try {
       const response = await api<GetTaskByIDType>(
-        `/task/${storedWorkspace}/${taskInputValue}`,
+        `/task/${storedWorkspace}/${taskInputValue}?custom_task_ids=${isCustomId}`,
         storedToken
       );
 
@@ -146,7 +152,6 @@ function Widget() {
         storedToken
       );
 
-      console.log({ response });
       if (!response) {
         throw new Error('Error occurred during data fetching');
       }
@@ -158,7 +163,7 @@ function Widget() {
       console.error('Error:', error);
       figma.notify('Error occurred during data fetching');
     } finally {
-      // setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -183,6 +188,13 @@ function Widget() {
             value={taskInputValue}
             placeholder='Enter task ID'
             onTextEditEnd={(e) => setTaskInputValue(e.characters)}
+          />
+          <Checkbox
+            defaultChecked={isCustomId}
+            label={'Custom ID'}
+            onChange={(e) => {
+              setIsCustomId(e);
+            }}
           />
           <Button label='Search' loading={isLoading} onClick={searchTask} />
         </>

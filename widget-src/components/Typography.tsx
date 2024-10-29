@@ -1,3 +1,5 @@
+import { getAllMatches } from '../utils/string';
+
 const { widget } = figma;
 const { AutoLayout, Text } = widget;
 
@@ -93,6 +95,29 @@ export function Typography({
   strokeWidth,
 }: TypographyProps) {
   const style = typographyVariants[variant];
+  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g;
+
+  if (
+    Array.isArray(children) &&
+    typeof children[0] === 'string' &&
+    getAllMatches(children[0], markdownLinkRegex).length > 0
+  ) {
+    const match = getAllMatches(children[0], markdownLinkRegex);
+    const [_, linkText, url] = match[0];
+
+    return (
+      <AutoLayout
+        padding={{ vertical: 4 }}
+        cornerRadius={4}
+        verticalAlignItems='center'
+        horizontalAlignItems='center'
+      >
+        <Text textDecoration='underline' href={url.toString()}>
+          {linkText}
+        </Text>
+      </AutoLayout>
+    );
+  }
 
   return (
     <AutoLayout
@@ -100,13 +125,13 @@ export function Typography({
       height='hug-contents'
       onClick={onClick}
       padding={padding}
-      wrap={true}
+      wrap={wrap}
       stroke={stroke}
       strokeWidth={strokeWidth}
     >
       <Text
         verticalAlignText={alighment}
-        width={'fill-parent'}
+        width='fill-parent'
         {...style}
         fontWeight={style?.fontWeight || fontWeight || 'normal'}
         fill={fill}

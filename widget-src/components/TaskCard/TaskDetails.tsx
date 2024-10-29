@@ -27,7 +27,7 @@ export const TicketDetails = ({ task }: { task: GetTaskByIDType }) => {
           {/* Right column */}
           <AutoLayout direction='vertical' width='fill-parent'>
             <Typography variant='h5' children='Priority' />
-            <Typography children={task.priority.priority} />
+            <Typography children={task?.priority?.priority || '-'} />
           </AutoLayout>
         </AutoLayout>
 

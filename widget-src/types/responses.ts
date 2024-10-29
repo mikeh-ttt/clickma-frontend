@@ -24,7 +24,7 @@ export type GetTaskByIDType = {
   checklists: any[]; // You might want to create a more specific type for checklists
   tags: Tag[];
   parent: any | null; // You might want to create a more specific type for parent tasks
-  priority: Priority;
+  priority?: Priority;
   due_date: UnixTimestamp | null;
   start_date: UnixTimestamp | null;
   points: number | null;

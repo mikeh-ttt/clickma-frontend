@@ -19,6 +19,7 @@ export const MarkdownContent = ({
   if (mode === 'raw') return rawContent;
   const markdownObject = parseMarkdown(content);
 
+  console.log({ markdownObject });
   return markdownObject.map((object, index) => {
     switch (object.type) {
       case 'header':
@@ -64,7 +65,7 @@ export const MarkdownContent = ({
 
         return (
           <Typography
-            width={'fill-parent'}
+            width='fill-parent'
             wrap={true}
             key={`formatted-${index}`}
             variant='p'
@@ -77,7 +78,7 @@ export const MarkdownContent = ({
       case 'list': {
         return (
           <AutoLayout
-            width={'fill-parent'}
+            width='fill-parent'
             key={`list-${index}`}
             direction='vertical'
             spacing={spacing}
@@ -99,7 +100,7 @@ export const MarkdownContent = ({
                 );
               return (
                 <AutoLayout
-                  width={'fill-parent'}
+                  width='fill-parent'
                   key={`listItem-${itemIndex}`}
                   direction='horizontal'
                   spacing={spacing}
@@ -114,7 +115,7 @@ export const MarkdownContent = ({
                   ) : (
                     <Typography variant='body1'>•</Typography>
                   )}
-                  <Typography width={'fill-parent'} variant='p'>
+                  <Typography width='fill-parent' variant='p'>
                     {item.content.replace(/\*\*/g, '')}
                   </Typography>
                 </AutoLayout>
@@ -136,12 +137,8 @@ export const MarkdownContent = ({
         }
 
         return (
-          <AutoLayout width={'fill-parent'} key={index} direction='vertical'>
-            <AutoLayout
-              width={'fill-parent'}
-              direction='horizontal'
-              spacing={16}
-            >
+          <AutoLayout width='fill-parent' key={index} direction='vertical'>
+            <AutoLayout width='fill-parent' direction='horizontal' spacing={16}>
               {object.headers.map((header, headerIndex) => (
                 <Typography
                   key={headerIndex}
@@ -157,7 +154,7 @@ export const MarkdownContent = ({
               <AutoLayout
                 stroke='#000'
                 strokeWidth={2}
-                width={'fill-parent'}
+                width='fill-parent'
                 key={rowIndex}
                 direction='horizontal'
                 spacing={16}

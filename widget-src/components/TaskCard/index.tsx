@@ -1,6 +1,5 @@
 import { GetTaskByIDType } from '../../types/responses';
 import { formatDate } from '../../utils/date';
-import { parseMarkdown } from '../../utils/html';
 import { spacing } from '../../utils/theme';
 import Button from '../Button';
 import { Collapse } from '../Collapse';
@@ -29,21 +28,21 @@ export const TaskCard = ({
     ''
   );
 
-  const handleSync = () => {
-    setLastSyncTime(formatDate(new Date()));
-    onSync(task, index);
-  };
-  console.log(parseMarkdown(task.markdown_description || ''));
   return (
-    <AutoLayout spacing={spacing * 2} direction='vertical'>
+    <AutoLayout width={1000} spacing={spacing * 2} direction='vertical'>
       {lastSyncTime ? (
         <AutoLayout verticalAlignItems='center'>
           <Typography fill='#666'>{`Last synced: ${lastSyncTime}`}</Typography>
         </AutoLayout>
       ) : null}
-      <AutoLayout direction='horizontal' spacing='auto'>
-        <AutoLayout>
-          <Typography padding={{ right: 100 }} variant='h1'>
+      <AutoLayout width='fill-parent' direction='horizontal' spacing='auto'>
+        <AutoLayout width={800} wrap={true}>
+          <Typography
+            width='fill-parent'
+            wrap={true}
+            variant='h1'
+            padding={{ right: spacing * 10 }}
+          >
             {task.name}
           </Typography>
         </AutoLayout>

@@ -1,6 +1,6 @@
 {
   "name": "clickma-test",
-  "id": "clickma-test-1",
+  "id": "1433124735400917045",
   "api": "1.0.0",
   "editorType": [
     "figma",
@@ -12,5 +12,11 @@
   "containsWidget": true,
   "main": "dist/code.js",
   "ui": "dist/index.html",
-  "widgetApi": "1.0.0"
+  "widgetApi": "1.0.0",
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://clickma-backend.vercel.app/"
+    ]
+  }
 }
