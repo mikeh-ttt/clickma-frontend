@@ -1,3 +1,4 @@
+import { spacing } from '../utils/theme';
 import { Typography } from './Typography';
 
 const { widget } = figma;
@@ -60,7 +61,7 @@ export function Collapse({
       <AutoLayout
         width='fill-parent'
         height='hug-contents'
-        spacing={8}
+        spacing={spacing}
         onClick={() => setIsOpen(!isOpen)}
       >
         <AutoLayout

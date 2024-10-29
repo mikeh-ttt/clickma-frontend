@@ -1,4 +1,4 @@
-import { borderRadius, colors } from '../utils/theme';
+import { borderRadius, colors, spacing } from '../utils/theme';
 
 const { widget } = figma;
 const { AutoLayout, Text, useSyncedState, SVG } = widget;
@@ -48,7 +48,7 @@ const Button = ({
 
   return (
     <AutoLayout
-      spacing={6}
+      spacing={spacing}
       onClick={onClick}
       fill={fill || currentColors.background}
       stroke={variant === 'outline' ? colors.outline.border : undefined}

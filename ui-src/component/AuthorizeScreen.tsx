@@ -35,7 +35,6 @@ const AuthorizeScreen = ({
       // don't fetch until access token is available
       if (!accessToken) return;
 
-      console.log({ accessToken });
       const response = await fetch(`https://api.clickup.com/api/v2/user`, {
         method: 'GET',
         mode: 'cors',

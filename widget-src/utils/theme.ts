@@ -28,3 +28,5 @@ export const colors = {
 } as const;
 
 export const borderRadius = 8;
+
+export const spacing = 8;

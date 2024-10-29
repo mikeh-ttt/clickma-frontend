@@ -6,12 +6,15 @@ const { SVG } = widget;
 export const TaskSyncButton = ({
   id,
   workspace,
+  onClick,
 }: {
   id: string;
   workspace: string;
+  onClick: () => void;
 }) => {
   return (
     <Button
+      onClick={onClick}
       icon={
         <SVG
           src={`

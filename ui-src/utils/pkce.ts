@@ -22,7 +22,6 @@ export const generateCodeChallenge = async (verifier: string) => {
   const encoder = new TextEncoder();
   const data = encoder.encode(verifier);
 
-  console.log({ c: window.crypto });
   // Hash the code verifier using SHA-256
   const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array

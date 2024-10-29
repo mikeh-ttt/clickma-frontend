@@ -1,7 +1,7 @@
 const { widget } = figma;
 const { AutoLayout, Text } = widget;
 
-const typographyVariants = {
+export const typographyVariants = {
   h1: {
     fontSize: 32,
     fontWeight: 700,
@@ -52,9 +52,9 @@ const typographyVariants = {
   },
 } as const;
 
-interface TypographyProps {
+export interface TypographyProps {
   variant?: keyof typeof typographyVariants;
-  children: string | number;
+  children: TextChildren['children'];
   fill?: string;
   width?: number | 'hug-contents' | 'fill-parent';
   fontFamily?: string;
@@ -67,6 +67,15 @@ interface TypographyProps {
   href?: string;
   padding?: WidgetJSX.Padding;
   wrap?: boolean;
+  fontWeight?: WidgetJSX.FontWeight;
+  alighment?: 'top' | 'center' | 'bottom';
+  stroke?:
+    | string
+    | WidgetJSX.Color
+    | WidgetJSX.SolidPaint
+    | WidgetJSX.GradientPaint
+    | (WidgetJSX.SolidPaint | WidgetJSX.GradientPaint)[];
+  strokeWidth?: number;
 }
 
 export function Typography({
@@ -78,18 +87,31 @@ export function Typography({
   onClick,
   padding,
   wrap,
+  fontWeight,
+  alighment,
+  stroke,
+  strokeWidth,
 }: TypographyProps) {
   const style = typographyVariants[variant];
 
   return (
     <AutoLayout
-      width={width}
+      width={variant === 'p' ? 'fill-parent' : width}
       height='hug-contents'
       onClick={onClick}
       padding={padding}
-      wrap={wrap}
+      wrap={true}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
     >
-      <Text {...style} fill={fill} fontFamily={fontFamily}>
+      <Text
+        verticalAlignText={alighment}
+        width={'fill-parent'}
+        {...style}
+        fontWeight={style?.fontWeight || fontWeight || 'normal'}
+        fill={fill}
+        fontFamily={fontFamily}
+      >
         {children}
       </Text>
     </AutoLayout>

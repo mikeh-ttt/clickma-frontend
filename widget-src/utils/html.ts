@@ -1,138 +1,269 @@
-// Types for parsed components
-interface BaseComponent {
+import { getAllMatches } from './string';
+
+// Base type for all markdown elements
+interface BaseMarkdownElement {
   type: string;
 }
 
-interface HTMLTextComponent extends BaseComponent {
-  type: 'h1' | 'h2' | 'h3' | 'p';
+// Header element type
+interface HeaderElement extends BaseMarkdownElement {
+  type: 'header';
+  level: number;
   content: string;
 }
 
-interface ListComponent extends BaseComponent {
-  type: 'ul' | 'ol';
-  items: (string | string[])[];
+// Paragraph element type
+interface ParagraphElement extends BaseMarkdownElement {
+  type: 'paragraph';
+  content: string;
+  links?: LinkElement[];
 }
 
-interface TableComponent extends BaseComponent {
+// Link element type
+interface LinkElement {
+  text: string;
+  url: string;
+}
+
+// List element type
+interface ListElement extends BaseMarkdownElement {
+  type: 'list';
+  items: ListItemElement[];
+  ordered: boolean;
+}
+
+// List item element type
+interface ListItemElement extends BaseMarkdownElement {
+  type: 'listItem';
+  indent: number;
+  ordered: boolean;
+  content: string;
+}
+
+// Code block element type
+interface CodeElement extends BaseMarkdownElement {
+  type: 'code';
+  language: string;
+  content: string[];
+}
+
+// Table element type
+interface TableElement extends BaseMarkdownElement {
   type: 'table';
   headers: string[];
+  alignments: ('left' | 'center' | 'right')[];
   rows: string[][];
 }
 
-type ParsedComponent = HTMLTextComponent | ListComponent | TableComponent;
-
-// Parser function
-export function parseHTMLString(html: string): ParsedComponent[] {
-  const components: ParsedComponent[] = [];
-
-  const cleanText = (text: string): string => {
-    return text
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .trim();
+// Formatted text element type
+interface FormattedElement extends BaseMarkdownElement {
+  type: 'formatted';
+  content: string;
+  formatting: {
+    bold: string[];
+    italic: string[];
   };
-
-  const extractContent = (
-    str: string,
-    startTag: string,
-    endTag: string
-  ): string => {
-    const startIndex = str.indexOf(startTag) + startTag.length;
-    const endIndex = str.indexOf(endTag);
-    if (startIndex >= 0 && endIndex >= 0) {
-      return str.slice(startIndex, endIndex);
-    }
-    return '';
-  };
-
-  const chunks = html.split(
-    /(<h[1-6]>|<\/h[1-6]>|<p>|<\/p>|<ul>|<\/ul>|<ol>|<\/ol>|<table>|<\/table>)/
-  );
-
-  let currentList: ListComponent | null = null;
-  let currentTable: TableComponent | null = null;
-  let insideList = false;
-  let insideTable = false;
-
-  chunks.forEach((chunk) => {
-    const trimmedChunk = chunk.trim();
-    if (!trimmedChunk) return;
-
-    const headingMatch = trimmedChunk.match(/<h(\d)>/);
-    if (headingMatch) {
-      const level = headingMatch[1];
-      const headingText = extractContent(html, `<h${level}>`, `</h${level}>`);
-      components.push({
-        type: `h${level}` as 'h1' | 'h2' | 'h3',
-        content: cleanText(headingText),
-      });
-    } else if (trimmedChunk.startsWith('<p>')) {
-      const paragraphText = extractContent(trimmedChunk, '<p>', '</p>');
-      components.push({
-        type: 'p',
-        content: cleanText(paragraphText),
-      });
-    } else if (trimmedChunk === '<ul>') {
-      currentList = { type: 'ul', items: [] };
-      insideList = true;
-    } else if (trimmedChunk === '</ul>' && currentList) {
-      if (currentList.items.length > 0) {
-        components.push(currentList);
-      }
-      currentList = null;
-      insideList = false;
-    } else if (trimmedChunk === '<ol>') {
-      currentList = { type: 'ol', items: [] };
-      insideList = true;
-    } else if (trimmedChunk === '</ol>' && currentList) {
-      if (currentList.items.length > 0) {
-        components.push(currentList);
-      }
-      currentList = null;
-      insideList = false;
-    } else if (trimmedChunk.includes('<li>') && insideList && currentList) {
-      const itemContent = extractContent(trimmedChunk, '<li>', '</li>');
-      if (itemContent.includes('<p>')) {
-        const paragraphs = itemContent
-          .split('</p>')
-          .map((p) => extractContent(p, '<p>', '</p>'))
-          .filter((p) => p)
-          .map((p) => cleanText(p));
-        currentList.items.push(paragraphs);
-      } else {
-        currentList.items.push(cleanText(itemContent));
-      }
-    } else if (trimmedChunk === '<table>') {
-      currentTable = { type: 'table', headers: [], rows: [] };
-      insideTable = true;
-    } else if (trimmedChunk === '</table>' && currentTable) {
-      if (currentTable.headers.length > 0 || currentTable.rows.length > 0) {
-        components.push(currentTable);
-      }
-      currentTable = null;
-      insideTable = false;
-    } else if (trimmedChunk.includes('<th>') && insideTable && currentTable) {
-      const headerText = extractContent(trimmedChunk, '<th>', '</th>');
-      currentTable.headers.push(cleanText(headerText));
-    } else if (trimmedChunk.includes('<td>') && insideTable && currentTable) {
-      const cellText = extractContent(trimmedChunk, '<td>', '</td>');
-      if (currentTable.rows.length === 0) {
-        currentTable.rows.push([]);
-      }
-      if (currentTable.rows.length > 0) {
-        currentTable.rows[currentTable.rows.length - 1].push(
-          cleanText(cellText)
-        );
-      }
-    } else if (trimmedChunk.includes('<tr>') && insideTable && currentTable) {
-      if (!trimmedChunk.includes('<th>')) {
-        currentTable.rows.push([]);
-      }
-    }
-  });
-
-  return components;
 }
+
+// Union type of all possible markdown elements
+type MarkdownElement =
+  | HeaderElement
+  | ParagraphElement
+  | ListElement
+  | ListItemElement
+  | CodeElement
+  | TableElement
+  | FormattedElement;
+
+// Main function type
+export type ParseMarkdownFunction = (markdown: string) => MarkdownElement[];
+
+// Update the function signature
+export const parseMarkdown: ParseMarkdownFunction = (markdown: string) => {
+  const lines = markdown.split('\n');
+  const result = [];
+  let currentSection = null;
+  let listItems = [];
+  let codeBlock: any = null;
+  let tableData: any = null;
+
+  const parseTableRow = (line: string) => {
+    return line
+      .split('|')
+      .filter((cell) => cell.trim() !== '')
+      .map((cell) => cell.trim());
+  };
+
+  const isTableDelimiterRow = (line: string) => {
+    const cells = line.split('|').filter((cell) => cell.trim() !== '');
+    return cells.every((cell) => {
+      const trimmed = cell.trim();
+      return trimmed.match(/^[-:]+$/) && trimmed.length >= 3;
+    });
+  };
+
+  const getColumnAlignment = (delimiter: string) => {
+    const trimmed = delimiter.trim();
+    if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+    if (trimmed.endsWith(':')) return 'right';
+    return 'left';
+  };
+
+  const processLine = (line: string) => {
+    // Table handling
+    if (line.includes('|')) {
+      if (!tableData) {
+        // Potential start of a table
+        const headerCells = parseTableRow(line);
+        if (headerCells.length > 0) {
+          tableData = {
+            type: 'table',
+            headers: headerCells,
+            alignments: [],
+            rows: [],
+          };
+          return null;
+        }
+      } else if (isTableDelimiterRow(line)) {
+        // Table delimiter row defines column alignments
+        const delimiters = line
+          .split('|')
+          .filter((cell) => cell.trim() !== '')
+          .map((cell) => cell.trim());
+        tableData.alignments = delimiters.map(getColumnAlignment);
+        return null;
+      } else if (tableData) {
+        // Regular table row
+        const rowCells = parseTableRow(line);
+        if (rowCells.length === tableData.headers.length) {
+          tableData.rows.push(rowCells);
+          return null;
+        }
+      }
+    } else if (tableData) {
+      // End of table reached
+      const completedTable = { ...tableData };
+      tableData = null;
+      return completedTable;
+    }
+
+    // Headers
+    const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headerMatch) {
+      return {
+        type: 'header',
+        level: headerMatch[1].length,
+        content: headerMatch[2].trim(),
+      };
+    }
+
+    // Code blocks
+    if (line.startsWith('```')) {
+      if (!codeBlock) {
+        codeBlock = {
+          type: 'code',
+          language: line.slice(3).trim(),
+          content: [],
+        };
+        return null;
+      } else {
+        const completedBlock = { ...codeBlock };
+        codeBlock = null;
+        return completedBlock;
+      }
+    }
+
+    if (codeBlock) {
+      codeBlock.content.push(line);
+      return null;
+    }
+
+    // Lists
+    const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
+    if (listMatch) {
+      const indent = listMatch[1].length;
+      return {
+        type: 'listItem',
+        indent,
+        ordered: /\d+\./.test(listMatch[2]),
+        content: listMatch[3].trim(),
+      };
+    }
+
+    // Links
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    if (line.match(linkRegex)) {
+      return {
+        type: 'paragraph',
+        content: line,
+        links: [...getAllMatches(line, linkRegex)].map((match) => ({
+          text: match[1],
+          url: match[2],
+        })),
+      };
+    }
+
+    // Bold and Italic
+    const hasFormatting = /[*_]{1,2}[^*_]+[*_]{1,2}/.test(line);
+    if (hasFormatting) {
+      return {
+        type: 'formatted',
+        content: line,
+        formatting: {
+          bold:
+            line.match(/[*_]{2}([^*_]+)[*_]{2}/g)?.map((m) => m.slice(2, -2)) ||
+            [],
+          italic:
+            line
+              .match(/(^|[^*_])([*_])([^*_]+)\2(?![*_])/g)
+              ?.map((m) => m.slice(1, -1)) || [],
+        },
+      };
+    }
+
+    // Paragraphs
+    if (line.trim()) {
+      return {
+        type: 'paragraph',
+        content: line.trim(),
+      };
+    }
+
+    return null;
+  };
+
+  for (const line of lines) {
+    const processed = processLine(line);
+    if (processed) {
+      if (processed.type === 'listItem') {
+        listItems.push(processed);
+      } else {
+        if (listItems.length > 0) {
+          result.push({
+            type: 'list',
+            items: listItems,
+            ordered: listItems[0].ordered,
+          });
+          listItems = [];
+        }
+        result.push(processed);
+      }
+    }
+  }
+
+  // Handle any remaining list items
+  if (listItems.length > 0) {
+    result.push({
+      type: 'list',
+      items: listItems,
+      ordered: listItems[0].ordered,
+    });
+  }
+
+  // Handle any remaining table
+  if (tableData) {
+    result.push(tableData);
+  }
+
+  return result;
+};

@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 const env = JSON.stringify(require('dotenv').config().parsed);
 
-console.log({ env });
 // https://vitejs.dev/config/
 export default defineConfig({
   root: './ui-src',

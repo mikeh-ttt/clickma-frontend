@@ -1,16 +1,20 @@
 import { GetTaskByIDType } from '../../types/responses';
-import { formatTimestampToDate } from '../../utils/date';
+import { formatDuration, formatTimestampToDate } from '../../utils/date';
+import { spacing } from '../../utils/theme';
 import { Typography } from '../Typography';
 
 const { widget } = figma;
 const { AutoLayout } = widget;
 
 export const TicketDetails = ({ task }: { task: GetTaskByIDType }) => {
-  console.log({ task });
   return (
-    <AutoLayout direction='vertical' width='fill-parent' spacing={16}>
+    <AutoLayout direction='vertical' width='fill-parent' spacing={spacing * 2}>
       {/* Details grid */}
-      <AutoLayout direction='vertical' width='fill-parent' spacing={16}>
+      <AutoLayout
+        direction='vertical'
+        width='fill-parent'
+        spacing={spacing * 2}
+      >
         {/* Row 1 */}
         <AutoLayout direction='horizontal' width='fill-parent'>
           {/* Left column */}
@@ -32,7 +36,13 @@ export const TicketDetails = ({ task }: { task: GetTaskByIDType }) => {
           {/* Left column */}
           <AutoLayout direction='vertical' width='fill-parent'>
             <Typography variant='h5' children='Time estimate' />
-            <Typography children={task.time_estimate || '-'} />
+            <Typography
+              children={
+                task.time_estimate
+                  ? formatDuration(Number(task.time_estimate))
+                  : '-'
+              }
+            />
           </AutoLayout>
           {/* Right column */}
           <AutoLayout direction='vertical' width='fill-parent'>

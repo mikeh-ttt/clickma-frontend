@@ -1,48 +1,59 @@
-// const { widget } = figma;
-// const { AutoLayout, Text, useSyncedState } = widget;
+import { spacing } from '../utils/theme';
+import { Divider } from './Divider';
+import { Typography, TypographyProps } from './Typography';
 
-// interface TableProps {
-//   headers: string[];
-//   data: TableRow[];
-//   legendSelection: string;
-// }
+const { widget } = figma;
+const { AutoLayout, Line } = widget;
 
-// interface TableRow {
-//   stage: string;
-//   count: number;
-// }
+interface TableProps {
+  headers: string[];
+  alignments: Array<'left' | 'center' | 'right'>;
+  rows: string[][];
+}
 
-// const stages = ['All Stages', 'Inactive Assets', 'Development & Production'];
+export const Table = ({ headers, alignments, rows }: TableProps) => {
+  return (
+    <AutoLayout width='fill-parent' direction='vertical' spacing={0}>
+      {/* Render Headers */}
+      <AutoLayout width='fill-parent' direction='horizontal' spacing={0}>
+        {headers.map((header, index) => (
+          <Typography
+            key={`header-${index}`}
+            variant='h5'
+            width='fill-parent'
+            // alignment={alignments[index] as TypographyProps['alighment']}
+            padding={{ top: spacing, bottom: spacing }}
+          >
+            {header}
+          </Typography>
+        ))}
+      </AutoLayout>
 
-// const Table = ({ headers, data, legendSelection }: TableProps) => (
-//   <AutoLayout
-//     direction='vertical'
-//     spacing={8}
-//     padding={16}
-//     fill='#FFF'
-//     stroke='#DDD'
-//     cornerRadius={8}
-//   >
-//     {/* Render table header */}
-//     <AutoLayout direction='horizontal' spacing={16}>
-//       {headers.map((header) => (
-//         <Text key={header} fontSize={14} weight='bold'>
-//           {header}
-//         </Text>
-//       ))}
-//     </AutoLayout>
+      {/* Render Rows */}
+      {rows.map((row, rowIndex) => (
+        <AutoLayout
+          width='fill-parent'
+          key={`row-${rowIndex}`}
+          direction='horizontal'
+          spacing={0}
+        >
+          {row.map((cell, cellIndex) => (
+            <AutoLayout width='fill-parent' direction='vertical'>
+              <Divider />
+              <Typography
+                key={`cell-${rowIndex}-${cellIndex}`}
+                variant='body1'
+                width='fill-parent'
+                padding={{ top: spacing, bottom: spacing }}
 
-//     {/* Render each row */}
-//     {data
-//       .filter(
-//         (row) =>
-//           legendSelection === 'All Stages' || row.stage === legendSelection
-//       )
-//       .map((row) => (
-//         <AutoLayout direction='horizontal' spacing={16} key={row.stage}>
-//           <Text fontSize={14}>{row.stage}</Text>
-//           <Text fontSize={14}>{row.count}</Text>
-//         </AutoLayout>
-//       ))}
-//   </AutoLayout>
-// );
+                //   alignment={alignments[cellIndex]}
+              >
+                {cell.replace(/\*\*/g, '')}
+              </Typography>
+            </AutoLayout>
+          ))}
+        </AutoLayout>
+      ))}
+    </AutoLayout>
+  );
+};

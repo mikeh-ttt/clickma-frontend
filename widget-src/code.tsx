@@ -97,14 +97,12 @@ function Widget() {
     if (!storedToken || !storedWorkspace) return;
 
     setIsLoading(true);
-    console.log(`/task/${storedWorkspace}/${taskInputValue}`);
     try {
       const response = await api<GetTaskByIDType>(
         `/task/${storedWorkspace}/${taskInputValue}`,
         storedToken
       );
 
-      console.log({ response });
       if (!response) {
         throw new Error('Error occurred during data fetching');
       }
@@ -137,6 +135,33 @@ function Widget() {
     });
   };
 
+  const handleSyncTask = async (task: GetTaskByIDType, index: number) => {
+    if (!storedToken || !storedWorkspace) return;
+
+    setIsLoading(true);
+
+    try {
+      const response = await api<GetTaskByIDType>(
+        `/task/${storedWorkspace}/${task.id}`,
+        storedToken
+      );
+
+      console.log({ response });
+      if (!response) {
+        throw new Error('Error occurred during data fetching');
+      }
+
+      setTaskList((prev) => prev.map((e, i) => (i === index ? response : e)));
+
+      figma.notify('Synced task successfully!');
+    } catch (error) {
+      console.error('Error:', error);
+      figma.notify('Error occurred during data fetching');
+    } finally {
+      // setIsLoading(false);
+    }
+  };
+
   return (
     <AutoLayout
       direction='vertical'
@@ -166,7 +191,13 @@ function Widget() {
       {storedWorkspace && taskList && Array.isArray(taskList)
         ? taskList.map((task, index) => {
             return (
-              <TaskCard workspace={storedWorkspace} task={task} index={index} />
+              <TaskCard
+                key={task.id + index}
+                onSync={handleSyncTask}
+                workspace={storedWorkspace}
+                task={task}
+                index={index}
+              />
             );
           })
         : null}
